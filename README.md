@@ -1,6 +1,6 @@
 # NIS2 Ontology-Driven Compliance Integration for the CyberSynchrony Ecosystem
 
-**Lithuanian Cybercrime Centre of Excellence (L3CE)**  
+**Lithuanian Cybercrime Centre of Excellence for Training, Research, and Education (L3CE)**  
 Vilnius, Lithuania
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)

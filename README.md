@@ -162,13 +162,12 @@ The ontology is designed as a semantic middleware layer connecting CyberSynchron
 ### Figure 1 — Regulatory Framework (Civilian Scope)
 ![Figure 1](figures/figure1_regulatory_framework.svg)
 
-*The L3CE Regulatory Framework ontology models NIS2 within the broader EU civilian regulatory landscape, using `subClassOf` hierarchies connecting NIS2, EU AI Act, CER Directive, GDPR, and DORA to a top-level Regulatory Framework class. Defence and military nodes excluded per civilian application scope.*
+*Figure 1 presents the L3CE Regulatory Framework ontology in civilian scope — a three-layer RDF/OWL class hierarchy positioning NIS2 alongside the EU AI Act, CER Directive, GDPR, and DORA under a top-level RegulatoryFramework class. subClassOf relationships encode the legal architecture of the EU regulatory landscape, providing the ontological foundation from which the Article 21 compliance chain descends. Defence and military nodes are excluded per CyberSynchrony Call 2 civilian scope requirements.*
 
 ### Figure 2 — Evidence Layer (Art.21 → CVE)
-![Figure 2](figures/figure2_evidence_layer.svg)
+![Figure 2](figures/Figure2.png)
 
-*Extends Figure 1 downward through four operational layers: NIS2 Article 21 obligations, control categories, CWE weakness classes, and CVE instances. Three semantic properties enable automated four-hop reasoning from pen test finding to NIS2 legal obligation.*
-
+*Figure 2 extends the L3CE Regulatory Framework ontology (Figure 1) from NIS2 Article 21 obligations down to penetration test findings. Three semantic relationships (satisfies, indicatesFailureOf, instanceOfWeakness) automate the derivation of NIS2 compliance gaps from CYRESCUE CVE output – eliminating manual mapping and enabling direct integration with CYBERGOPLUS and NCC reporting workflows.*
 ---
 
 ## Related L3CE Publications and Repositories

@@ -175,7 +175,7 @@ The ontology is designed as a semantic middleware layer connecting CyberSynchron
 
 | Work | Description | Status |
 |---|---|---|
-| [EPMwDC Ontology](https://github.com/l3ce/epmdwc-ontology) | Dual-use regulatory compliance ontology | Published — Open Research Europe, 2024 |
+| [EPMwDC Ontology](https://github.com/l3ce/epmdwc-ontology) | Dual-use regulatory compliance ontology | Open Research Europe, in process 2026 |
 | [HIPSTer Framework](https://github.com/l3ce/hipster-framework) | Hybrid threat detection — OSINT/SoCMINT | Under review — Journal of Intelligent Communication |
 | NIS2 Compliance Ontology | This repository | Active development — February 2026 |
 
@@ -218,7 +218,7 @@ If you use this ontology in your research or projects, please cite:
 **Dr R. Andrew**  
 Senior Research Associate, Strategic Lead & Ontology Architect  
 Lithuanian Cybercrime Centre of Excellence (L3CE)  
-Mykolas Romeris University  
 Vilnius, Lithuania  
+andrew@l3ce.eu
 
 *Part of L3CE's ontology-driven regulatory compliance research programme.*

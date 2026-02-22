@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NIS2 Ontology – Evidence Layer</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',sans-serif; background:#0f1923; color:#e0e0e0; display:flex; flex-direction:column; height:100vh; }
+
+  header { padding:14px 24px 8px; background:#162230; border-bottom:1px solid #2a3f54; flex-shrink:0; }
+  header h1 { font-size:14px; color:#7ecfff; letter-spacing:.5px; }
+  header p  { font-size:10.5px; color:#7a9ab5; margin-top:3px; }
+
+  #filters {
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    padding:8px 24px; background:#162230; border-bottom:1px solid #2a3f54; flex-shrink:0;
+  }
+  .fbtn {
+    padding:3px 11px; border-radius:20px; font-size:10.5px;
+    border:1.5px solid; cursor:pointer; transition:all .2s; background:transparent;
+  }
+  .fbtn.active { color:#0f1923 !important; }
+  .fbtn[data-edge="all"]                  { border-color:#7ecfff;color:#7ecfff; }
+  .fbtn[data-edge="all"].active           { background:#7ecfff; }
+  .fbtn[data-edge="satisfies"].active     { background:#f5a623; }
+  .fbtn[data-edge="satisfies"]            { border-color:#f5a623;color:#f5a623; }
+  .fbtn[data-edge="indicatesFailureOf"]   { border-color:#e05c5c;color:#e05c5c; }
+  .fbtn[data-edge="indicatesFailureOf"].active { background:#e05c5c; }
+  .fbtn[data-edge="instanceOfWeakness"]   { border-color:#a78bfa;color:#a78bfa; }
+  .fbtn[data-edge="instanceOfWeakness"].active { background:#a78bfa; }
+  .fbtn[data-edge="subClassOf"]           { border-color:#6ee7b7;color:#6ee7b7; }
+  .fbtn[data-edge="subClassOf"].active    { background:#6ee7b7; }
+
+  #main { display:flex; flex:1; overflow:hidden; }
+  #canvas { flex:1; overflow:auto; }
+  svg { display:block; }
+
+  /* SPARQL PANEL */
+  #sparql-panel {
+    width:340px; flex-shrink:0;
+    background:#0d1f2d; border-left:1px solid #2a3f54;
+    display:flex; flex-direction:column;
+    transition:width .3s;
+  }
+  #sparql-panel.hidden { width:0; overflow:hidden; border:none; }
+  #sp-header {
+    padding:12px 14px 8px; background:#162230;
+    border-bottom:1px solid #2a3f54; flex-shrink:0;
+  }
+  #sp-header h2 { font-size:12px; color:#a78bfa; }
+  #sp-header p  { font-size:10px; color:#7a9ab5; margin-top:2px; }
+  #sp-body { flex:1; overflow-y:auto; padding:12px 14px; }
+
+  .sp-section { margin-bottom:14px; }
+  .sp-section h3 { font-size:10px; color:#7a9ab5; text-transform:uppercase; letter-spacing:.7px; margin-bottom:6px; }
+
+  .sp-query {
+    background:#0a1520; border:1px solid #1e3a50; border-radius:6px;
+    padding:10px; font-family:'Courier New',monospace; font-size:10px;
+    color:#7ecfff; line-height:1.7; white-space:pre-wrap;
+  }
+  .sp-kw  { color:#f5a623; }
+  .sp-var { color:#a78bfa; }
+  .sp-uri { color:#6ee7b7; }
+  .sp-cmt { color:#4a7090; }
+
+  .chain-step {
+    display:flex; align-items:flex-start; gap:8px;
+    padding:6px 8px; border-radius:5px; margin-bottom:4px;
+    font-size:10.5px; line-height:1.5;
+  }
+  .chain-arrow { color:#f5a623; font-weight:700; flex-shrink:0; margin-top:1px; }
+  .chain-node  { flex:1; }
+  .chain-node strong { display:block; font-size:11px; }
+  .chain-node span   { color:#7a9ab5; font-size:10px; }
+  .chain-badge {
+    display:inline-block; font-size:9px; padding:1px 6px;
+    border-radius:8px; margin-top:3px; font-weight:600;
+  }
+
+  .result-row {
+    background:#0a1a28; border:1px solid #1e3a50; border-radius:5px;
+    padding:7px 10px; margin-bottom:5px; font-size:10px;
+    line-height:1.6;
+  }
+  .result-row .rvar { color:#a78bfa; }
+  .result-row .rval { color:#e0e0e0; }
+  .result-row .obligation { color:#f5a623; font-weight:600; }
+  .result-row .risk-crit { color:#ef4444; font-weight:700; }
+  .result-row .risk-high { color:#f59e0b; font-weight:700; }
+
+  #sp-hint {
+    padding:40px 20px; text-align:center; color:#2a4a60; font-size:12px; line-height:1.8;
+  }
+  #sp-hint span { font-size:28px; display:block; margin-bottom:12px; }
+
+  /* TOOLTIP */
+  #tooltip {
+    position:fixed; pointer-events:none;
+    background:#1e3448; border:1px solid #3a6080;
+    border-radius:8px; padding:10px 14px;
+    font-size:11.5px; max-width:260px; line-height:1.6;
+    opacity:0; transition:opacity .2s; z-index:999;
+  }
+  #tooltip h3 { font-size:12px; color:#7ecfff; margin-bottom:4px; }
+  .tag {
+    display:inline-block; font-size:9.5px; padding:1px 6px;
+    border-radius:10px; margin:2px 2px 0 0;
+  }
+  .layer-label { font-size:10px; fill:#3a6070; font-weight:700; letter-spacing:.8px; text-transform:uppercase; }
+  .fig1-badge  { font-size:9px; fill:#6ee7b7; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Figure 2: NIS2 Compliance Ontology — Evidence Layer</h1>
+  <p>L3CE Framework · NIS2 Directive (Figure 1) → Art.21 Obligations → Control Categories → CWE Weakness Classes → CVE Instances (CYRESCUE)</p>
+</header>
+
+<div id="filters">
+  <span style="font-size:10.5px;color:#7a9ab5;">Show edges:</span>
+  <button class="fbtn active" data-edge="all">All</button>
+  <button class="fbtn" data-edge="subClassOf">subClassOf</button>
+  <button class="fbtn" data-edge="satisfies">satisfies</button>
+  <button class="fbtn" data-edge="indicatesFailureOf">indicatesFailureOf</button>
+  <button class="fbtn" data-edge="instanceOfWeakness">instanceOfWeakness</button>
+  <span style="margin-left:auto;font-size:10px;color:#4a7090;">💡 Click any CVE node to see SPARQL reasoning chain</span>
+</div>
+
+<div id="main">
+  <div id="canvas"></div>
+
+  <div id="sparql-panel" class="hidden">
+    <div id="sp-header">
+      <h2>⚡ SPARQL Reasoning Chain</h2>
+      <p id="sp-subtitle">Automated NIS2 compliance gap derivation</p>
+    </div>
+    <div id="sp-body">
+      <div id="sp-hint"><span>🔍</span>Click a CVE node<br>to trace its full<br>NIS2 compliance chain</div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+
+const W = 1020, H = 720, NR = 40;
+
+const LAYERS = [
+  { label:'FIGURE 1 CONNECTION · NIS2 DIRECTIVE', y:60  },
+  { label:'LAYER 1 · NIS2 ARTICLE 21 OBLIGATIONS', y:175 },
+  { label:'LAYER 2 · CONTROL CATEGORIES',          y:330 },
+  { label:'LAYER 3 · CWE WEAKNESS CLASSES',        y:490 },
+  { label:'LAYER 4 · CVE INSTANCES  (CYRESCUE)',   y:630 },
+];
+
+const NODES = [
+  // Fig1 anchor
+  { id:'NIS2', layer:0, label:'NIS2 Directive', sub:'→ Figure 1',
+    color:'#1e4060', textColor:'#7ecfff', isFig1:true,
+    tip:'Anchor node connecting to the Regulatory Framework ontology in Figure 1. All Article 21 obligations are subClassOf this class.' },
+
+  // Layer 1 — Art21
+  { id:'a21a', layer:1, label:'Art.21(2)(a)', sub:'Risk Analysis & IS Security',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(a)',
+    tip:'Risk analysis and information system security policies. Requires documented risk management processes.' },
+  { id:'a21b', layer:1, label:'Art.21(2)(b)', sub:'Incident Handling',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(b)',
+    tip:'Incident handling procedures including detection, response and reporting obligations.' },
+  { id:'a21c', layer:1, label:'Art.21(2)(c)', sub:'Business Continuity & Backup',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(c)',
+    tip:'Business continuity, backup management and disaster recovery.' },
+  { id:'a21e', layer:1, label:'Art.21(2)(e)', sub:'Security in Acquisition & Dev',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(e)',
+    tip:'Security in network and information systems acquisition, development and maintenance.' },
+  { id:'a21h', layer:1, label:'Art.21(2)(h)', sub:'Cryptography & Encryption',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(h)',
+    tip:'Policies and procedures regarding the use of cryptography and encryption.' },
+  { id:'a21i', layer:1, label:'Art.21(2)(i)', sub:'Access Control & Asset Mgmt',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(i)',
+    tip:'Access control policies and asset management including privileged access.' },
+  { id:'a21j', layer:1, label:'Art.21(2)(j)', sub:'Multi-Factor Authentication',
+    color:'#1d4ed8', textColor:'#fff', articleRef:'NIS2 Art.21(2)(j)',
+    tip:'Use of multi-factor authentication or continuous authentication solutions.' },
+
+  // Layer 2 — Controls
+  { id:'c_net',  layer:2, label:'Network Segmentation', sub:'Perimeter Control',
+    color:'#065f46', textColor:'#fff', nist:'AC-4, SC-7',
+    tip:'Controls governing network architecture, segmentation and perimeter defence.' },
+  { id:'c_patch',layer:2, label:'Patch Management',    sub:'Vulnerability Management',
+    color:'#065f46', textColor:'#fff', nist:'SI-2, RA-5',
+    tip:'Systematic identification, prioritisation and remediation of software vulnerabilities.' },
+  { id:'c_auth', layer:2, label:'Authentication',      sub:'Identity Management',
+    color:'#065f46', textColor:'#fff', nist:'IA-2, IA-5',
+    tip:'Authentication mechanisms, credential management and identity lifecycle controls.' },
+  { id:'c_enc',  layer:2, label:'Encryption Controls', sub:'Cryptographic Measures',
+    color:'#065f46', textColor:'#fff', nist:'SC-8, SC-28',
+    tip:'Encryption of data in transit and at rest using approved cryptographic algorithms.' },
+  { id:'c_inc',  layer:2, label:'Incident Detection',  sub:'Logging & Monitoring',
+    color:'#065f46', textColor:'#fff', nist:'AU-2, IR-4, SI-4',
+    tip:'Continuous monitoring, log management and anomaly detection capabilities.' },
+  { id:'c_bkp',  layer:2, label:'Backup & Recovery',   sub:'Continuity Procedures',
+    color:'#065f46', textColor:'#fff', nist:'CP-9, CP-10',
+    tip:'Regular backup procedures, integrity verification and tested recovery processes.' },
+
+  // Layer 3 — CWE
+  { id:'cwe89',  layer:3, label:'CWE-89',  sub:'SQL Injection',
+    color:'#b45309', textColor:'#fff', risk:'High',
+    tip:'Improper neutralisation of special elements used in SQL commands. Indicates failure of input validation and patch management controls.' },
+  { id:'cwe287', layer:3, label:'CWE-287', sub:'Improper Authentication',
+    color:'#991b1b', textColor:'#fff', risk:'Critical',
+    tip:'Failure to correctly implement authentication. Directly maps to NIS2 Art.21(2)(i) and (j) obligations.' },
+  { id:'cwe311', layer:3, label:'CWE-311', sub:'Missing Encryption',
+    color:'#991b1b', textColor:'#fff', risk:'Critical',
+    tip:'Sensitive data stored or transmitted without encryption. Directly violates Art.21(2)(h) cryptography requirements.' },
+  { id:'cwe400', layer:3, label:'CWE-400', sub:'Resource Exhaustion',
+    color:'#b45309', textColor:'#fff', risk:'Medium',
+    tip:'Uncontrolled resource consumption enabling denial-of-service. Impacts incident detection and availability controls.' },
+  { id:'cwe522', layer:3, label:'CWE-522', sub:'Weak Credential Protection',
+    color:'#991b1b', textColor:'#fff', risk:'Critical',
+    tip:'Credentials stored or transmitted without adequate protection. Violates both authentication and encryption controls.' },
+  { id:'cwe862', layer:3, label:'CWE-862', sub:'Missing Authorization',
+    color:'#92400e', textColor:'#fff', risk:'High',
+    tip:'Missing or insufficient authorisation checks. Maps to access control failures under Art.21(2)(i).' },
+
+  // Layer 4 — CVE
+  { id:'cve1', layer:4, label:'CVE-2024-21413', sub:'Outlook RCE · CVSS 9.8',
+    color:'#5b21b6', textColor:'#fff', cvss:'9.8', discoveredBy:'CYRESCUE-CSPA',
+    cweId:'cwe287',
+    tip:'Microsoft Outlook remote code execution. Exploits improper authentication handling. CYRESCUE-CSPA pen test finding.' },
+  { id:'cve2', layer:4, label:'CVE-2023-44487', sub:'HTTP/2 Rapid Reset · CVSS 7.5',
+    color:'#5b21b6', textColor:'#fff', cvss:'7.5', discoveredBy:'CYRESCUE-CSPA',
+    cweId:'cwe400',
+    tip:'HTTP/2 protocol DoS vulnerability. Allows resource exhaustion leading to service unavailability. CYRESCUE-CSPA finding.' },
+  { id:'cve3', layer:4, label:'CVE-2024-XXXX',  sub:'Credential Storage · CVSS 8.1',
+    color:'#5b21b6', textColor:'#fff', cvss:'8.1', discoveredBy:'CYRESCUE-CSPA',
+    cweId:'cwe522',
+    tip:'Unencrypted credential storage discovered in essential entity infrastructure. CYRESCUE-CSPA pen test finding.' },
+];
+
+const EDGES = [
+  // Fig1 subClassOf
+  { s:'a21a',t:'NIS2',type:'subClassOf'},{ s:'a21b',t:'NIS2',type:'subClassOf'},
+  { s:'a21c',t:'NIS2',type:'subClassOf'},{ s:'a21e',t:'NIS2',type:'subClassOf'},
+  { s:'a21h',t:'NIS2',type:'subClassOf'},{ s:'a21i',t:'NIS2',type:'subClassOf'},
+  { s:'a21j',t:'NIS2',type:'subClassOf'},
+  // satisfies
+  { s:'c_net',  t:'a21a',type:'satisfies'},{ s:'c_net', t:'a21i',type:'satisfies'},
+  { s:'c_patch',t:'a21a',type:'satisfies'},{ s:'c_patch',t:'a21e',type:'satisfies'},
+  { s:'c_auth', t:'a21i',type:'satisfies'},{ s:'c_auth',t:'a21j',type:'satisfies'},
+  { s:'c_enc',  t:'a21h',type:'satisfies'},
+  { s:'c_inc',  t:'a21b',type:'satisfies'},
+  { s:'c_bkp',  t:'a21c',type:'satisfies'},
+  // indicatesFailureOf
+  { s:'cwe89', t:'c_patch',type:'indicatesFailureOf'},{ s:'cwe89', t:'c_net',  type:'indicatesFailureOf'},
+  { s:'cwe287',t:'c_auth', type:'indicatesFailureOf'},
+  { s:'cwe311',t:'c_enc',  type:'indicatesFailureOf'},
+  { s:'cwe400',t:'c_inc',  type:'indicatesFailureOf'},
+  { s:'cwe522',t:'c_auth', type:'indicatesFailureOf'},{ s:'cwe522',t:'c_enc', type:'indicatesFailureOf'},
+  { s:'cwe862',t:'c_auth', type:'indicatesFailureOf'},{ s:'cwe862',t:'c_net', type:'indicatesFailureOf'},
+  // instanceOfWeakness
+  { s:'cve1',t:'cwe287',type:'instanceOfWeakness'},
+  { s:'cve2',t:'cwe400',type:'instanceOfWeakness'},
+  { s:'cve3',t:'cwe522',type:'instanceOfWeakness'},
+];
+
+const ECOL = {
+  satisfies:'#f5a623', indicatesFailureOf:'#e05c5c',
+  instanceOfWeakness:'#a78bfa', subClassOf:'#6ee7b7',
+};
+
+// SPARQL chain data per CVE
+const CHAINS = {
+  cve1: {
+    cve:'CVE-2024-21413', cvss:'9.8', desc:'Microsoft Outlook Remote Code Execution',
+    cwe:'CWE-287', cweName:'Improper Authentication', risk:'Critical',
+    control:'AuthenticationControl', controlLabel:'Authentication & Identity Management',
+    obligations:[
+      { id:'Art.21(2)(i)', label:'Access Control & Asset Management' },
+      { id:'Art.21(2)(j)', label:'Multi-Factor Authentication' },
+    ]
+  },
+  cve2: {
+    cve:'CVE-2023-44487', cvss:'7.5', desc:'HTTP/2 Rapid Reset — Denial of Service',
+    cwe:'CWE-400', cweName:'Uncontrolled Resource Consumption', risk:'Medium',
+    control:'IncidentDetectionControl', controlLabel:'Incident Detection & Logging',
+    obligations:[
+      { id:'Art.21(2)(b)', label:'Incident Handling' },
+    ]
+  },
+  cve3: {
+    cve:'CVE-2024-XXXX', cvss:'8.1', desc:'Unencrypted Credential Storage',
+    cwe:'CWE-522', cweName:'Insufficiently Protected Credentials', risk:'Critical',
+    control:'AuthenticationControl + EncryptionControl',
+    controlLabel:'Authentication & Encryption Controls',
+    obligations:[
+      { id:'Art.21(2)(i)', label:'Access Control & Asset Management' },
+      { id:'Art.21(2)(h)', label:'Cryptography & Encryption Policies' },
+      { id:'Art.21(2)(j)', label:'Multi-Factor Authentication' },
+    ]
+  },
+};
+
+// ── LAYOUT ─────────────────────────────────────────────────────────
+
+const nodeMap = {};
+NODES.forEach(n => nodeMap[n.id]=n);
+
+[0,1,2,3,4].forEach(li => {
+  const grp = NODES.filter(n=>n.layer===li);
+  const sp = W/(grp.length+1);
+  grp.forEach((n,i)=>{ n.x=sp*(i+1); n.y=LAYERS[li].y; });
+});
+
+// ── SVG BUILD ──────────────────────────────────────────────────────
+
+const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+svg.setAttribute('width',W); svg.setAttribute('height',H);
+
+// defs
+const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+Object.entries(ECOL).forEach(([type,color])=>{
+  const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  m.setAttribute('id',`arr-${type}`);
+  m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');
+  m.setAttribute('refX','5');m.setAttribute('refY','3');m.setAttribute('orient','auto');
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M0,0 L0,6 L7,3 z'); p.setAttribute('fill',color);
+  m.appendChild(p); defs.appendChild(m);
+});
+svg.appendChild(defs);
+
+// bg
+const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+bg.setAttribute('width',W);bg.setAttribute('height',H);bg.setAttribute('fill','#0f1923');
+svg.appendChild(bg);
+
+// layer bands
+const bandColors=['#1a2535','#1a2e44','#162a20','#2a1f1f','#1e1a2e'];
+LAYERS.forEach((l,i)=>{
+  const band=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  band.setAttribute('x',0);band.setAttribute('width',W);
+  const y0=l.y-50, y1=i<4?LAYERS[i+1].y-50:H;
+  band.setAttribute('y',y0);band.setAttribute('height',y1-y0);
+  band.setAttribute('fill',bandColors[i]);band.setAttribute('opacity','0.45');
+  svg.appendChild(band);
+  const lt=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lt.setAttribute('x',10);lt.setAttribute('y',l.y-30);
+  lt.setAttribute('class','layer-label');lt.textContent=l.label;
+  svg.appendChild(lt);
+});
+
+// Fig1 badge on NIS2 node area
+const fig1note=document.createElementNS('http://www.w3.org/2000/svg','text');
+fig1note.setAttribute('x',W/2+60);fig1note.setAttribute('y',LAYERS[0].y-28);
+fig1note.setAttribute('class','fig1-badge');
+fig1note.textContent='← Connects to Regulatory Framework in Figure 1';
+svg.appendChild(fig1note);
+
+// edges
+const edgeGroup=document.createElementNS('http://www.w3.org/2000/svg','g');
+edgeGroup.setAttribute('id','edges');
+svg.appendChild(edgeGroup);
+
+function renderEdges(filter){
+  edgeGroup.innerHTML='';
+  EDGES.forEach(e=>{
+    if(filter!=='all'&&e.type!==filter)return;
+    const s=nodeMap[e.s],t=nodeMap[e.t];
+    if(!s||!t)return;
+    const col=ECOL[e.type]||'#555';
+    const dx=t.x-s.x,dy=t.y-s.y,dist=Math.sqrt(dx*dx+dy*dy);
+    const ox=dx/dist*NR,oy=dy/dist*NR;
+    const mx=(s.x+t.x)/2+(dy/dist)*15, my=(s.y+t.y)/2-(dx/dist)*8;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${s.x+ox},${s.y+oy} Q${mx},${my} ${t.x-ox*1.4},${t.y-oy*1.4}`);
+    path.setAttribute('stroke',col);path.setAttribute('stroke-width','1.6');
+    path.setAttribute('fill','none');path.setAttribute('opacity','0.65');
+    path.setAttribute('marker-end',`url(#arr-${e.type})`);
+    edgeGroup.appendChild(path);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',mx);lbl.setAttribute('y',my-5);
+    lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','8');
+    lbl.setAttribute('fill',col);lbl.setAttribute('opacity','0.8');
+    lbl.textContent=e.type;
+    edgeGroup.appendChild(lbl);
+  });
+}
+
+// nodes
+NODES.forEach(n=>{
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('cursor','pointer');
+
+  if(n.isFig1){
+    // dashed reference node
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',NR);
+    c.setAttribute('fill','#0d1f30');c.setAttribute('stroke','#6ee7b7');
+    c.setAttribute('stroke-width','2');c.setAttribute('stroke-dasharray','6,3');
+    g.appendChild(c);
+    const t1=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',n.x);t1.setAttribute('y',n.y-6);
+    t1.setAttribute('text-anchor','middle');t1.setAttribute('font-size','11');
+    t1.setAttribute('font-weight','700');t1.setAttribute('fill','#7ecfff');
+    t1.textContent=n.label;g.appendChild(t1);
+    const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',n.x);t2.setAttribute('y',n.y+9);
+    t2.setAttribute('text-anchor','middle');t2.setAttribute('font-size','9');
+    t2.setAttribute('fill','#6ee7b7');t2.textContent=n.sub;g.appendChild(t2);
+  } else {
+    const isCVE=n.layer===4;
+    const sh=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    sh.setAttribute('cx',n.x+2);sh.setAttribute('cy',n.y+2);sh.setAttribute('r',NR);
+    sh.setAttribute('fill','#000');sh.setAttribute('opacity','0.25');
+    g.appendChild(sh);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',NR);
+    c.setAttribute('fill',n.color);
+    c.setAttribute('stroke', isCVE?'#c4b5fd':'rgba(255,255,255,0.15)');
+    c.setAttribute('stroke-width', isCVE?'2.5':'1.5');
+    g.appendChild(c);
+    if(isCVE){
+      const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      pulse.setAttribute('cx',n.x);pulse.setAttribute('cy',n.y);pulse.setAttribute('r',NR+4);
+      pulse.setAttribute('fill','none');pulse.setAttribute('stroke','#a78bfa');
+      pulse.setAttribute('stroke-width','1');pulse.setAttribute('opacity','0.4');
+      g.appendChild(pulse);
+    }
+    const tl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    tl.setAttribute('x',n.x);tl.setAttribute('y',n.sub?n.y-5:n.y+4);
+    tl.setAttribute('text-anchor','middle');tl.setAttribute('font-size','10.5');
+    tl.setAttribute('font-weight','700');tl.setAttribute('fill',n.textColor||'#fff');
+    tl.textContent=n.label;g.appendChild(tl);
+    if(n.sub){
+      const words=n.sub.split(' ');let line='',ln=0;
+      const ts=document.createElementNS('http://www.w3.org/2000/svg','text');
+      ts.setAttribute('x',n.x);ts.setAttribute('y',n.y+8);
+      ts.setAttribute('text-anchor','middle');ts.setAttribute('font-size','8');
+      ts.setAttribute('fill','rgba(255,255,255,0.7)');
+      words.forEach(w=>{
+        if((line+w).length>13&&line){
+          const sp=document.createElementNS('http://www.w3.org/2000/svg','tspan');
+          sp.setAttribute('x',n.x);sp.setAttribute('dy',ln===0?'0':'10');
+          sp.textContent=line.trim();ts.appendChild(sp);line=w+' ';ln++;
+        }else line+=w+' ';
+      });
+      const sp=document.createElementNS('http://www.w3.org/2000/svg','tspan');
+      sp.setAttribute('x',n.x);sp.setAttribute('dy',ln===0?'0':'10');
+      sp.textContent=line.trim();ts.appendChild(sp);g.appendChild(ts);
+    }
+  }
+
+  // tooltip
+  g.addEventListener('mouseenter',ev=>{
+    const tt=document.getElementById('tooltip');
+    let h=`<h3>${n.label}</h3><div style="color:#aaa;font-size:10.5px">${n.sub||''}</div>`;
+    if(n.articleRef) h+=`<br><span class="tag" style="background:#1e3a8a">📋 ${n.articleRef}</span>`;
+    if(n.nist)       h+=`<span class="tag" style="background:#064e3b">NIST ${n.nist}</span>`;
+    if(n.risk){const rc={Critical:'#7f1d1d',High:'#78350f',Medium:'#1c3a1c'}[n.risk];h+=`<span class="tag" style="background:${rc}">Risk: ${n.risk}</span>`;}
+    if(n.discoveredBy) h+=`<span class="tag" style="background:#3b0764">🔍 ${n.discoveredBy}</span>`;
+    if(n.cvss)       h+=`<span class="tag" style="background:#1e1b4b">CVSS ${n.cvss}</span>`;
+    if(n.tip)        h+=`<div style="margin-top:7px;font-size:10px;color:#94a3b8;border-top:1px solid #2a3f54;padding-top:6px">${n.tip}</div>`;
+    if(n.layer===4)  h+=`<div style="margin-top:5px;font-size:10px;color:#a78bfa">← Click to see SPARQL chain</div>`;
+    tt.innerHTML=h; tt.style.opacity='1';
+    tt.style.left=(ev.clientX+14)+'px'; tt.style.top=(ev.clientY-10)+'px';
+  });
+  g.addEventListener('mouseleave',()=>{ document.getElementById('tooltip').style.opacity='0'; });
+  g.addEventListener('mousemove',ev=>{
+    const tt=document.getElementById('tooltip');
+    tt.style.left=(ev.clientX+14)+'px'; tt.style.top=(ev.clientY-10)+'px';
+  });
+
+  // CVE click → SPARQL panel
+  if(n.layer===4){
+    g.addEventListener('click',()=>showSPARQL(n.id));
+  }
+
+  svg.appendChild(g);
+});
+
+document.getElementById('canvas').appendChild(svg);
+renderEdges('all');
+
+// ── SPARQL PANEL ───────────────────────────────────────────────────
+
+function showSPARQL(cveId){
+  const d=CHAINS[cveId];
+  if(!d)return;
+  const panel=document.getElementById('sparql-panel');
+  panel.classList.remove('hidden');
+  document.getElementById('sp-subtitle').textContent=`→ ${d.cve}`;
+
+  const riskCol={Critical:'#ef4444',High:'#f59e0b',Medium:'#84cc16'}[d.risk]||'#aaa';
+
+  const oblRows=d.obligations.map(o=>
+    `<div class="result-row">
+      <span class="rvar">?obligation</span> = <span class="obligation">${o.id}</span><br>
+      <span class="rvar">?label</span> = "${o.label}"
+    </div>`).join('');
+
+  document.getElementById('sp-body').innerHTML=`
+
+    <div class="sp-section">
+      <h3>Input — Pen Test Finding</h3>
+      <div class="result-row">
+        <span class="rvar">?cve</span> = <span class="rval">${d.cve}</span><br>
+        <span class="rvar">?cvss</span> = <span style="color:#f87171;font-weight:700">${d.cvss}</span><br>
+        <span class="rvar">?desc</span> = "${d.desc}"<br>
+        <span class="rvar">?source</span> = <span style="color:#a78bfa">CYRESCUE-CSPA</span>
+      </div>
+    </div>
+
+    <div class="sp-section">
+      <h3>SPARQL Query</h3>
+      <div class="sp-query"><span class="sp-cmt"># Traverse CVE → CWE → Control → NIS2 obligation</span>
+<span class="sp-kw">SELECT</span> <span class="sp-var">?cve ?cwe ?control ?obligation ?article</span>
+<span class="sp-kw">WHERE</span> {
+  <span class="sp-var">?cve</span>  <span class="sp-uri">rdf:type</span>           <span class="sp-uri">nis2:CVEInstance</span> ;
+        <span class="sp-uri">nis2:instanceOfWeakness</span>  <span class="sp-var">?cwe</span> .
+  <span class="sp-var">?cwe</span>  <span class="sp-uri">nis2:indicatesFailureOf</span> <span class="sp-var">?control</span> .
+  <span class="sp-var">?control</span> <span class="sp-uri">nis2:satisfies</span>        <span class="sp-var">?obligation</span> .
+  <span class="sp-var">?obligation</span> <span class="sp-uri">nis2:articleRef</span>  <span class="sp-var">?article</span> .
+  <span class="sp-kw">FILTER</span>(<span class="sp-var">?cve</span> = <span class="sp-uri">nis2:${cveId}</span>)
+}</div>
+    </div>
+
+    <div class="sp-section">
+      <h3>Reasoning Chain</h3>
+
+      <div class="chain-step" style="background:#1e1a2e">
+        <div class="chain-arrow">①</div>
+        <div class="chain-node">
+          <strong style="color:#a78bfa">${d.cve}</strong>
+          <span>${d.desc}</span>
+          <span class="chain-badge" style="background:#1e1b4b">CVSS ${d.cvss}</span>
+          <span class="chain-badge" style="background:#3b0764">CYRESCUE-CSPA</span>
+        </div>
+      </div>
+
+      <div class="chain-step">
+        <div class="chain-arrow" style="color:#a78bfa">↓ instanceOfWeakness</div>
+      </div>
+
+      <div class="chain-step" style="background:#2a1f1f">
+        <div class="chain-arrow">②</div>
+        <div class="chain-node">
+          <strong style="color:#fca5a5">${d.cwe}</strong>
+          <span>${d.cweName}</span>
+          <span class="chain-badge" style="background:${riskCol};color:#fff">Risk: ${d.risk}</span>
+        </div>
+      </div>
+
+      <div class="chain-step">
+        <div class="chain-arrow" style="color:#e05c5c">↓ indicatesFailureOf</div>
+      </div>
+
+      <div class="chain-step" style="background:#162a20">
+        <div class="chain-arrow">③</div>
+        <div class="chain-node">
+          <strong style="color:#6ee7b7">${d.controlLabel}</strong>
+          <span>Control implementation gap identified</span>
+        </div>
+      </div>
+
+      <div class="chain-step">
+        <div class="chain-arrow" style="color:#f5a623">↓ satisfies (violated)</div>
+      </div>
+
+      <div class="chain-step" style="background:#1a2e44">
+        <div class="chain-arrow">④</div>
+        <div class="chain-node">
+          <strong style="color:#93c5fd">NIS2 Obligations FAILED</strong>
+          <span>Automated gap derivation complete</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sp-section">
+      <h3>Query Results — Compliance Gaps</h3>
+      ${oblRows}
+      <div style="margin-top:8px;font-size:10px;color:#4a7090;border-top:1px solid #1e3a50;padding-top:8px">
+        ✓ Automatically derived — no manual mapping required<br>
+        ✓ Ready for CYBERGOPLUS compliance dashboard<br>
+        ✓ NCC reportable under NIS2 Art.23
+      </div>
+    </div>
+  `;
+}
+
+// ── FILTERS ────────────────────────────────────────────────────────
+document.querySelectorAll('.fbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderEdges(btn.dataset.edge);
+  });
+});
+</script>
+</body>
+</html>

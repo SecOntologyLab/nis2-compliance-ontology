@@ -162,7 +162,7 @@ The ontology is designed as a semantic middleware layer connecting CyberSynchron
 ### Figure 1 — Regulatory Framework (Civilian Scope)
 ![Figure 1](figures/figure1_regulatory_framework.svg)
 
-*Figure 1 presents the L3CE Regulatory Framework ontology in civilian scope — a three-layer RDF/OWL class hierarchy positioning NIS2 alongside the EU AI Act, CER Directive, GDPR, and DORA under a top-level RegulatoryFramework class. subClassOf relationships encode the legal architecture of the EU regulatory landscape, providing the ontological foundation from which the Article 21 compliance chain descends. Defence and military nodes are excluded per CyberSynchrony Call 2 civilian scope requirements.*
+*Figure 1 presents the L3CE Regulatory Framework ontology in civilian scope — a three-layer RDF/OWL class hierarchy positioning NIS2 alongside the EU AI Act, CER Directive, GDPR, and DORA under a top-level RegulatoryFramework class. subClassOf relationships encode the legal architecture of the EU regulatory landscape, providing the ontological foundation from which the Article 21 compliance chain descends. *
 
 ### Figure 2 — Evidence Layer (Art.21 → CVE)
 ![Figure 2](figures/Figure2.png)

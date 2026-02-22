@@ -22,7 +22,7 @@ CVE finding → CWE weakness class → failed control → violated NIS2 Art.21 o
 ```
 
 This work is developed as part of L3CE's broader programme of ontology-driven regulatory compliance research, alongside:
-- [EPMwDC](https://github.com/l3ce/epmdwc-ontology) — Dual-use regulatory compliance ontology (Open Research Europe, 2024)
+- [EPMwDC](https://github.com/l3ce/epmdwc-ontology) — Dual-use regulatory compliance ontology (Open Research Europe, in process)
 - [HIPSTer](https://github.com/l3ce/hipster-framework) — Hybrid threat detection framework
 
 The framework is designed for integration with the **CyberSynchrony ecosystem** (CYRESCUE, CYBERGOPLUS, CYBERRA, CROSS-CORE, CYBERWISE) and validated against the NIS2 Directive's Article 21 security measure requirements across energy, transport, and water sector essential entities.

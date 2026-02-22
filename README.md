@@ -168,6 +168,7 @@ The ontology is designed as a semantic middleware layer connecting CyberSynchron
 ![Figure 2](figures/Figure2.png)
 
 *Figure 2 extends the L3CE Regulatory Framework ontology (Figure 1) from NIS2 Article 21 obligations down to penetration test findings. Three semantic relationships (satisfies, indicatesFailureOf, instanceOfWeakness) automate the derivation of NIS2 compliance gaps from CYRESCUE CVE output – eliminating manual mapping and enabling direct integration with CYBERGOPLUS and NCC reporting workflows.*
+
 ---
 
 ## Related L3CE Publications and Repositories

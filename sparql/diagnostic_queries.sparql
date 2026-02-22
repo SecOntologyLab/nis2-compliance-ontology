@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────
+# NIS2 Compliance Ontology — Diagnostic Queries
+# L3CE · SecOntologyLab · https://github.com/SecOntologyLab/nis2-compliance-ontology
+#
+# Use these queries to validate each hop in the reasoning chain
+# individually when loading the ontology into a new triplestore.
+# Run in sequence — each query confirms one layer of the chain.
+# ─────────────────────────────────────────────────────────────────
+
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX nis2: <https://l3ce.eu/ontology/nis2#>
+
+# ── DIAGNOSTIC 1 ─────────────────────────────────────────────────
+# Is anything loaded? Should return all triples (limit 20)
+# If this returns nothing → data did not load correctly
+
+SELECT ?s ?p ?o
+WHERE { ?s ?p ?o }
+LIMIT 20
+
+# ── DIAGNOSTIC 2 ─────────────────────────────────────────────────
+# Can the triplestore see the CVE instances?
+# Should return 3 rows
+
+# SELECT ?cve
+# WHERE {
+#   ?cve rdf:type nis2:CVEInstance .
+# }
+
+# ── DIAGNOSTIC 3 ─────────────────────────────────────────────────
+# First hop — CVE to CWE (instanceOfWeakness)
+# Should return 3 rows
+
+# SELECT ?cve ?cwe
+# WHERE {
+#   ?cve nis2:instanceOfWeakness ?cwe .
+# }
+
+# ── DIAGNOSTIC 4 ─────────────────────────────────────────────────
+# Second hop — CWE to Control (indicatesFailureOf)
+# Should return 9 rows
+
+# SELECT ?cwe ?control
+# WHERE {
+#   ?cwe nis2:indicatesFailureOf ?control .
+# }
+
+# ── DIAGNOSTIC 5 ─────────────────────────────────────────────────
+# Third hop — Control to Obligation (satisfies)
+# Should return 9 rows
+
+# SELECT ?control ?obligation
+# WHERE {
+#   ?control nis2:satisfies ?obligation .
+# }
+
+# ── DIAGNOSTIC 6 ─────────────────────────────────────────────────
+# Named graph check — if Diagnostics 1-5 return nothing,
+# your data may be in a named graph rather than the default graph.
+# This query checks all graphs.
+
+# SELECT ?s ?p ?o
+# WHERE {
+#   GRAPH ?g { ?s ?p ?o }
+# }
+# LIMIT 20
+
+# ── DIAGNOSTIC 7 ─────────────────────────────────────────────────
+# Find all named graphs in the database
+
+# SELECT DISTINCT ?g
+# WHERE { GRAPH ?g { ?s ?p ?o } }

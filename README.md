@@ -214,7 +214,7 @@ If you use this ontology in your research or projects, please cite:
 
 ## Contact
 
-**Dr R. Andrew**  
+**Dr R. Andrew Paskauskas, PhD (Toronto), MSc (Oxford)**  
 Senior Research Associate, Strategic Lead & Ontology Architect  
 Lithuanian Cybercrime Centre of Excellence (L3CE)  
 Vilnius, Lithuania  

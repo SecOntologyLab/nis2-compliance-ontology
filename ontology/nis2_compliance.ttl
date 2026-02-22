@@ -1,0 +1,227 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix nis2: <https://l3ce.eu/ontology/nis2#> .
+@prefix cwe:  <https://cwe.mitre.org/data/definitions/> .
+@prefix cve:  <https://cve.mitre.org/cve/> .
+@prefix nist: <https://csrc.nist.gov/ns/sp800-53#> .
+
+# ─────────────────────────────────────────────────────────────────
+# ONTOLOGY DECLARATION
+# ─────────────────────────────────────────────────────────────────
+
+<https://l3ce.eu/ontology/nis2>
+    a owl:Ontology ;
+    rdfs:label "NIS2 Article 21 Compliance Ontology - Evidence Layer"@en ;
+    rdfs:comment """Extends the L3CE Regulatory Framework ontology (Figure 1)
+    downward from NIS2 obligations through control categories to
+    CWE weakness classes and CVE vulnerability instances.
+    Enables automated pen-test-to-compliance-gap reasoning."""@en .
+
+# ─────────────────────────────────────────────────────────────────
+# LAYER 1: NIS2 ARTICLE 21 OBLIGATIONS
+# ─────────────────────────────────────────────────────────────────
+
+nis2:Article21Obligation
+    a owl:Class ;
+    rdfs:label "NIS2 Article 21 Security Obligation"@en ;
+    rdfs:subClassOf nis2:NIS2Directive ;
+    rdfs:comment "A specific cybersecurity risk-management measure required by NIS2 Art.21(2)"@en .
+
+nis2:Art21_2a  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(a) - Risk Analysis & IS Security Policies"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(a)"^^xsd:string .
+
+nis2:Art21_2b  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(b) - Incident Handling"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(b)"^^xsd:string .
+
+nis2:Art21_2c  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(c) - Business Continuity & Backup Management"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(c)"^^xsd:string .
+
+nis2:Art21_2e  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(e) - Security in NIS Acquisition & Development"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(e)"^^xsd:string .
+
+nis2:Art21_2h  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(h) - Cryptography & Encryption Policies"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(h)"^^xsd:string .
+
+nis2:Art21_2i  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(i) - Access Control & Asset Management"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(i)"^^xsd:string .
+
+nis2:Art21_2j  a owl:Class ;
+    rdfs:subClassOf nis2:Article21Obligation ;
+    rdfs:label "Art.21(2)(j) - Multi-Factor Authentication"@en ;
+    nis2:articleRef "NIS2 Directive, Article 21(2)(j)"^^xsd:string .
+
+# ─────────────────────────────────────────────────────────────────
+# LAYER 2: CONTROL CATEGORIES
+# ─────────────────────────────────────────────────────────────────
+
+nis2:ControlCategory
+    a owl:Class ;
+    rdfs:label "Cybersecurity Control Category"@en ;
+    rdfs:comment "Implementation-level control that satisfies one or more NIS2 Art.21 obligations"@en .
+
+nis2:satisfies
+    a owl:ObjectProperty ;
+    rdfs:label "satisfies"@en ;
+    rdfs:domain nis2:ControlCategory ;
+    rdfs:range  nis2:Article21Obligation ;
+    rdfs:comment "Links a control implementation to the NIS2 obligation it fulfils"@en .
+
+nis2:NetworkSegmentationControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Network Segmentation & Perimeter Control"@en ;
+    nis2:satisfies nis2:Art21_2a, nis2:Art21_2i ;
+    nist:mappedControl "AC-4, SC-7"^^xsd:string .
+
+nis2:PatchManagementControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Patch & Vulnerability Management"@en ;
+    nis2:satisfies nis2:Art21_2a, nis2:Art21_2e ;
+    nist:mappedControl "SI-2, RA-5"^^xsd:string .
+
+nis2:AuthenticationControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Authentication & Identity Management"@en ;
+    nis2:satisfies nis2:Art21_2i, nis2:Art21_2j ;
+    nist:mappedControl "IA-2, IA-5"^^xsd:string .
+
+nis2:EncryptionControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Encryption & Cryptographic Controls"@en ;
+    nis2:satisfies nis2:Art21_2h ;
+    nist:mappedControl "SC-8, SC-28"^^xsd:string .
+
+nis2:IncidentDetectionControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Incident Detection & Logging"@en ;
+    nis2:satisfies nis2:Art21_2b ;
+    nist:mappedControl "AU-2, IR-4, SI-4"^^xsd:string .
+
+nis2:BackupRecoveryControl  a owl:Class ;
+    rdfs:subClassOf nis2:ControlCategory ;
+    rdfs:label "Backup & Recovery Procedures"@en ;
+    nis2:satisfies nis2:Art21_2c ;
+    nist:mappedControl "CP-9, CP-10"^^xsd:string .
+
+# ─────────────────────────────────────────────────────────────────
+# LAYER 3a: CWE WEAKNESS CLASSES
+# ─────────────────────────────────────────────────────────────────
+
+nis2:CWEWeaknessClass
+    a owl:Class ;
+    rdfs:label "CWE Weakness Class"@en ;
+    rdfs:comment "A class of software/system weakness from the MITRE CWE taxonomy"@en .
+
+nis2:indicatesFailureOf
+    a owl:ObjectProperty ;
+    rdfs:label "indicatesFailureOf"@en ;
+    rdfs:domain nis2:CWEWeaknessClass ;
+    rdfs:range  nis2:ControlCategory ;
+    rdfs:comment "A discovered weakness of this class indicates failure of the linked control"@en .
+
+nis2:complianceRisk
+    a owl:DatatypeProperty ;
+    rdfs:label "complianceRisk"@en ;
+    rdfs:domain nis2:CWEWeaknessClass ;
+    rdfs:range  xsd:string .
+
+nis2:CWE_89  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-89: SQL Injection"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/89> ;
+    nis2:indicatesFailureOf nis2:PatchManagementControl, nis2:NetworkSegmentationControl ;
+    nis2:complianceRisk "High"^^xsd:string .
+
+nis2:CWE_287  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-287: Improper Authentication"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/287> ;
+    nis2:indicatesFailureOf nis2:AuthenticationControl ;
+    nis2:complianceRisk "Critical"^^xsd:string .
+
+nis2:CWE_311  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-311: Missing Encryption of Sensitive Data"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/311> ;
+    nis2:indicatesFailureOf nis2:EncryptionControl ;
+    nis2:complianceRisk "Critical"^^xsd:string .
+
+nis2:CWE_400  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-400: Uncontrolled Resource Consumption"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/400> ;
+    nis2:indicatesFailureOf nis2:IncidentDetectionControl ;
+    nis2:complianceRisk "Medium"^^xsd:string .
+
+nis2:CWE_522  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-522: Insufficiently Protected Credentials"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/522> ;
+    nis2:indicatesFailureOf nis2:AuthenticationControl, nis2:EncryptionControl ;
+    nis2:complianceRisk "Critical"^^xsd:string .
+
+nis2:CWE_862  a owl:Class ;
+    rdfs:subClassOf nis2:CWEWeaknessClass ;
+    rdfs:label "CWE-862: Missing Authorization"@en ;
+    owl:sameAs <https://cwe.mitre.org/data/definitions/862> ;
+    nis2:indicatesFailureOf nis2:AuthenticationControl, nis2:NetworkSegmentationControl ;
+    nis2:complianceRisk "High"^^xsd:string .
+
+# ─────────────────────────────────────────────────────────────────
+# LAYER 3b: CVE INSTANCES
+# ─────────────────────────────────────────────────────────────────
+
+nis2:CVEInstance
+    a owl:Class ;
+    rdfs:label "CVE Vulnerability Instance"@en ;
+    rdfs:comment "A specific, identified vulnerability discovered during pen testing"@en .
+
+nis2:instanceOfWeakness
+    a owl:ObjectProperty ;
+    rdfs:label "instanceOfWeakness"@en ;
+    rdfs:domain nis2:CVEInstance ;
+    rdfs:range  nis2:CWEWeaknessClass ;
+    rdfs:comment "Classifies a specific CVE under its parent CWE weakness class"@en .
+
+nis2:discoveredBy
+    a owl:DatatypeProperty ;
+    rdfs:label "discoveredBy"@en ;
+    rdfs:domain nis2:CVEInstance ;
+    rdfs:range  xsd:string .
+
+nis2:cvssScore
+    a owl:DatatypeProperty ;
+    rdfs:label "cvssScore"@en ;
+    rdfs:domain nis2:CVEInstance ;
+    rdfs:range  xsd:decimal .
+
+nis2:CVE_2024_21413  a nis2:CVEInstance ;
+    rdfs:label "CVE-2024-21413: Microsoft Outlook RCE"@en ;
+    nis2:cvssScore "9.8"^^xsd:decimal ;
+    nis2:discoveredBy "CYRESCUE-CSPA"^^xsd:string ;
+    nis2:instanceOfWeakness nis2:CWE_287 .
+
+nis2:CVE_2023_44487  a nis2:CVEInstance ;
+    rdfs:label "CVE-2023-44487: HTTP/2 Rapid Reset (DoS)"@en ;
+    nis2:cvssScore "7.5"^^xsd:decimal ;
+    nis2:discoveredBy "CYRESCUE-CSPA"^^xsd:string ;
+    nis2:instanceOfWeakness nis2:CWE_400 .
+
+nis2:CVE_2024_1234_Example  a nis2:CVEInstance ;
+    rdfs:label "CVE-2024-XXXX: Unencrypted credential storage (example)"@en ;
+    nis2:cvssScore "8.1"^^xsd:decimal ;
+    nis2:discoveredBy "CYRESCUE-CSPA"^^xsd:string ;
+    nis2:instanceOfWeakness nis2:CWE_522 .

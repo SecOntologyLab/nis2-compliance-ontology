@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────
+# NIS2 Compliance Ontology — Full Validation Query
+# L3CE · SecOntologyLab · https://github.com/SecOntologyLab/nis2-compliance-ontology
+#
+# Traverses the complete four-hop reasoning chain:
+# CVE finding → CWE weakness class → failed control → NIS2 Art.21 obligation
+#
+# Validated on STARDOG Cloud · 21 February 2026
+# Returns 6 rows from 3 CVE instances — zero manual mapping steps
+# ─────────────────────────────────────────────────────────────────
+
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX nis2: <https://l3ce.eu/ontology/nis2#>
+
+SELECT ?cve ?cwe ?control ?obligation ?article
+WHERE {
+  ?cve  rdf:type                 nis2:CVEInstance ;
+        nis2:instanceOfWeakness  ?cwe .
+  ?cwe  nis2:indicatesFailureOf  ?control .
+  ?control nis2:satisfies        ?obligation .
+  ?obligation nis2:articleRef    ?article .
+}
+ORDER BY ?cve ?obligation
+
+# ─────────────────────────────────────────────────────────────────
+# Expected results (6 rows):
+#
+# CVE_2023_44487      CWE_400  IncidentDetectionControl  Art21_2b  "NIS2 Directive, Article 21(2)(b)"
+# CVE_2024_1234_Example CWE_522  EncryptionControl       Art21_2h  "NIS2 Directive, Article 21(2)(h)"
+# CVE_2024_1234_Example CWE_522  AuthenticationControl   Art21_2i  "NIS2 Directive, Article 21(2)(i)"
+# CVE_2024_1234_Example CWE_522  AuthenticationControl   Art21_2j  "NIS2 Directive, Article 21(2)(j)"
+# CVE_2024_21413      CWE_287  AuthenticationControl     Art21_2i  "NIS2 Directive, Article 21(2)(i)"
+# CVE_2024_21413      CWE_287  AuthenticationControl     Art21_2j  "NIS2 Directive, Article 21(2)(j)"
+# ─────────────────────────────────────────────────────────────────
